@@ -20,6 +20,7 @@ A template repository for Northstar mods with a ~~mostly~~ pre-configured github
 
 <li> Update this README and <code>icon.png</code> as they will be used by Thunderstore as well </li>
 <li> Write your mod! (HINT: Find the docs <a href="https://r2northstar.readthedocs.io/en/latest/guides/gettingstarted.html">here</a>) </li>
+<li> Before pushing large files (100mb or larger), run <code>concat_assets.sh</code> and commit the archives instead. Your archives will be automatically concatted and extracted when creating a github release so the mod is downloadable from thunderstore without any extra steps</li>
 </ol>
 
 
