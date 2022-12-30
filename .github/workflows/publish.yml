@@ -32,9 +32,11 @@ jobs:
           echo cleanVersion=$(echo ${{github.ref_name}} | sed s/v//g) >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: |
-          cat ${{ github.workspace }}/compressed/assets.tar.gz.* > ${{ github.workspace }}/compressed/assets.tar.gz # concat assets
-          tar -xvf ${{ github.workspace }}/compressed/assets.tar.gz # extract concatinated assets
-          rm -f ${{ github.workspace }}/compressed/assets.tar.gz* # delete assets
+          if test -f "./compressed/assets.tar.gz"; then
+            cat ${{ github.workspace }}/compressed/assets.tar.gz.* > ${{ github.workspace }}/compressed/assets.tar.gz # concat assets
+            tar -xvf ${{ github.workspace }}/compressed/assets.tar.gz # extract concatinated assets
+            rm -f ${{ github.workspace }}/compressed/assets.tar.gz* # delete assets
+          fi
       - name: Upload Thunderstore Package
         uses:  GreenTF/upload-thunderstore-package@v2.2
         with:
