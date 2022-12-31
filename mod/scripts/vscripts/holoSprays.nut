@@ -1,6 +1,6 @@
 global function InitHoloSpray
 global function CreateSprite
-global function TraceFromEnt
+global function TraceFromEntView
 struct SprayInfo {
 	asset material
 	float scale
@@ -22,6 +22,7 @@ SprayInfo function _SprayInfo( asset material, float scale = 0.75, string color 
 
 table< entity, array<entity> > holoSpraysOfPlayer
 array<SprayInfo> sprayInfos
+const float VIS_HEALTH = 5.0
 
 void function InitHoloSpray()
 {
@@ -55,7 +56,6 @@ void function OnPlayerDisconnected( entity player )
 	delete holoSpraysOfPlayer[ player ]
 }
 
-
 void function OnUseHoloSpray( entity player )
 {
 	array<entity> sprays = holoSpraysOfPlayer[ player ]
@@ -66,18 +66,45 @@ void function OnUseHoloSpray( entity player )
 	}
 
 	const float force = 500.0 // initial force of the base pad
-	entity base = CreatePropPhysics( $"models/gameplay/health_pickup_small.mdl", player.EyePosition() - <0,0,20>, <0,0,0> )
-	base.kv.solid = 0
-
+	vector origin = player.EyePosition() - <0,0,20>
+	entity base = CreatePropPhysics( $"models/gameplay/health_pickup_small.mdl", origin, <0,0,0> )
+	base.kv.solid = SOLID_VPHYSICS
 	base.SetOwner( player )
+	base.Hide()
 
-	thread SpawnHoloSprite( base )
+	// entity vis = CreatePropDynamic( $"models/weapons/sentry_shield/sentry_shield_proj.mdl", origin )
+	// vis.SetParent( base )
+	// vis.kv.solid = SOLID_VPHYSICS
+
+	entity vis = CreateEntity( "prop_script" )
+	vis.SetValueForModelKey( $"models/weapons/sentry_shield/sentry_shield_proj.mdl" )
+	vis.SetOrigin( origin )
+	vis.kv.solid = SOLID_HITBOXES
+	vis.SetParent( base )
+	vis.SetMaxHealth( VIS_HEALTH )
+	vis.SetHealth( VIS_HEALTH )
+	AddEntityCallback_OnDamaged( vis, void function( entity vis, var damageInfo ) : ( base ) {
+			if( !IsValid( vis ) || !IsValid( base ) ) return
+
+			float damageAmount = DamageInfo_GetDamage( damageInfo )
+			float newHealth = vis.GetHealth() - damageAmount
+			vis.SetHealth( newHealth )
+
+			if( newHealth <= 0 )
+			{
+				base.Destroy()
+				holoSpraysOfPlayer[ base.GetOwner() ].fastremovebyvalue( base )
+			}
+		} )
+	DispatchSpawn( vis )
+
+	thread SpawnHoloSprite( base, vis )
 
 	holoSpraysOfPlayer[player].append( base )
 	base.SetVelocity( ( player.GetViewVector() ) * force )
 }
 
-void function SpawnHoloSprite( entity base )
+void function SpawnHoloSprite( entity base, entity vis )
 {
 	base.EndSignal( "OnDestroy" )
 	entity sprite
@@ -93,7 +120,8 @@ void function SpawnHoloSprite( entity base )
 			//make sure the object doesnt roll
 			base.SetVelocity( <0,0,0> )
 			//adjust angles to surface, <-90,0,0> is needed because we went the medkit to lie down flat
-			base.SetAngles( < -90,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
+			// base.SetAngles( < -90,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
+			base.SetAngles( < 0,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
 
 			entity mover = CreateExpensiveScriptMover( base.GetOrigin(), base.GetAngles() )
 			base.SetParent( mover )
@@ -105,9 +133,11 @@ void function SpawnHoloSprite( entity base )
 			base.StopPhysics()
 
 			SprayInfo info = sprayInfos.getrandom()
-			sprite = CreateSprite( base.GetCenter() + info.offset, <0,0,0>, info.material, "200 200 200", info.scale )
+			vector center = vis.GetCenter()
+			printt(center)
+			sprite = CreateSprite( center + info.offset, <0,0,0>, info.material, "200 200 200", info.scale )
 			sprite.SetParent( base ) 
-			light = CreateSprite( base.GetCenter() + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
+			light = CreateSprite( center + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
 			light.SetParent( base )
 
 			break
@@ -166,7 +196,7 @@ entity function CreateSprite( vector origin, vector angles, asset sprite, string
 }
 
 // Trace to the point an entity looks at
-TraceResults function TraceFromEnt( entity p )
+TraceResults function TraceFromEntView( entity p )
 {
 	TraceResults traceResults = TraceLineHighDetail( p.EyePosition(),
 	p.EyePosition() + p.GetViewVector() * 10000,

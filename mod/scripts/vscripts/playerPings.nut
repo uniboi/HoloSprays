@@ -84,7 +84,7 @@ void function SpawnPing( entity player )
 		playerPings[player] = pings.slice(1)
 	}
 
-	TraceResults trace = TraceFromEnt( player )
+	TraceResults trace = TraceFromEntView( player )
 	bool enemyPing = isEnemyPing( player, trace.endPos ) 
 	entity sprite = CreateSprite( trace.endPos, <0,0,0>, enemyPing ? $"materials/ui/hud/attacker_offscreen.vmt" : $"materials/vgui/hud/weapons/target_ring_arc_tool_inner.vmt", enemyPing ? "255 0 0" : GenerateRGBValueByIndex( GetPlayerArrayOfTeam(  player.GetTeam( ) ).find(player) ), enemyPing ? 0.6 :0.3 , 5 ) // 5
 	SetTeam( sprite, player.GetTeam() )
