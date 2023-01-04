@@ -10,12 +10,12 @@ const PING_DURATION = 15.0
 
 void function InitPlayerPings()
 {
-	PrecacheSprite($"materials/ui/hud/attacker_offscreen.vmt")
-	PrecacheSprite($"materials/vgui/hud/weapons/target_ring_arc_tool_inner.vmt")
+	PrecacheSprite( $"materials/ui/hud/attacker_offscreen.vmt" )
+	PrecacheSprite( $"materials/vgui/hud/weapons/target_ring_arc_tool_inner.vmt" )
 	RegisterSignal( "PingDestroyed" )
 
-	AddCallback_OnClientConnected(OnPlayerConnected)
-	AddCallback_OnClientDisconnected(OnPlayerDisconnected)
+	AddCallback_OnClientConnected( OnPlayerConnected )
+	AddCallback_OnClientDisconnected( OnPlayerDisconnected )
 }
 
 void function OnPlayerConnected( entity player )
@@ -27,7 +27,7 @@ void function OnPlayerConnected( entity player )
 void function OnPlayerDisconnected( entity player )
 {
     //avoid a crash by removing their pings 
-	delete playerPings[player]
+	delete playerPings[ player ]
 }
 
 string function GenerateRGBValueByIndex( int index )

@@ -1,6 +1,7 @@
 global function InitHoloSpray
 global function CreateSprite
 global function TraceFromEntView
+
 struct SprayInfo {
 	asset material
 	float scale
@@ -42,7 +43,6 @@ void function OnPlayerConnected( entity player )
 		wait RandomFloatRange( 0.0, 0.5 )
 		NSSendInfoMessageToPlayer( player, "You can use HOLOSPRAYS on this server, simply press %%use%% to throw yours" )
 	}()
-	
 }
 
 void function OnPlayerDisconnected( entity player )
@@ -62,13 +62,13 @@ void function OnUseHoloSpray( entity player )
 	if(sprays.len() >= 5) //spam is not cool
 	{
 		sprays[0].Destroy() // destroy the base
-		holoSpraysOfPlayer[player] = sprays.slice(1) // remove the reference
+		holoSpraysOfPlayer[ player ] = sprays.slice(1) // remove the reference
 	}
 
 	const float force = 500.0 // initial force of the base pad
 	vector origin = player.EyePosition() - <0,0,20>
 	entity base = CreatePropPhysics( $"models/gameplay/health_pickup_small.mdl", origin, <0,0,0> )
-	base.kv.solid = SOLID_VPHYSICS
+	// base.kv.solid = SOLID_VPHYSICS
 	base.SetOwner( player )
 	base.Hide()
 
@@ -79,10 +79,7 @@ void function OnUseHoloSpray( entity player )
 	entity vis = CreateEntity( "prop_script" )
 	vis.SetValueForModelKey( $"models/weapons/sentry_shield/sentry_shield_proj.mdl" )
 	vis.SetOrigin( origin )
-	vis.kv.solid = SOLID_HITBOXES
 	vis.SetParent( base )
-	vis.SetMaxHealth( VIS_HEALTH )
-	vis.SetHealth( VIS_HEALTH )
 	AddEntityCallback_OnDamaged( vis, void function( entity vis, var damageInfo ) : ( base ) {
 			if( !IsValid( vis ) || !IsValid( base ) ) return
 
@@ -100,7 +97,7 @@ void function OnUseHoloSpray( entity player )
 
 	thread SpawnHoloSprite( base, vis )
 
-	holoSpraysOfPlayer[player].append( base )
+	holoSpraysOfPlayer[ player ].append( base )
 	base.SetVelocity( ( player.GetViewVector() ) * force )
 }
 
@@ -113,7 +110,6 @@ void function SpawnHoloSprite( entity base, entity vis )
 
 	while( IsValid( base ) )
 	{
-	
 		TraceResults hit = OriginToFirst( base )
 		if( Length( base.GetOrigin() - hit.endPos ) <= 10 ) //is object close to the floor
 		{
@@ -134,11 +130,14 @@ void function SpawnHoloSprite( entity base, entity vis )
 
 			SprayInfo info = sprayInfos.getrandom()
 			vector center = vis.GetCenter()
-			printt(center)
 			sprite = CreateSprite( center + info.offset, <0,0,0>, info.material, "200 200 200", info.scale )
 			sprite.SetParent( base ) 
 			light = CreateSprite( center + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
 			light.SetParent( base )
+
+			vis.kv.solid = SOLID_HITBOXES
+			vis.SetMaxHealth( VIS_HEALTH )
+			vis.SetHealth( VIS_HEALTH )
 
 			break
 		}
@@ -154,11 +153,6 @@ TraceResults function OriginToFirst( entity base )
 	array<entity> ignore = []
 	vector origin1 = base.GetOrigin()
 	vector origin = origin1 + <1,1,1>
-	printt( "TEST " , origin)
-	printt( "TEST2 " , <origin.x, origin.y, origin.z - 2000> )
-	printt( "BASE ", base)
-	printt( "OWNER ", base.GetOwner() )
-	printt( "NAME ", base.GetOwner().GetPlayerName() )
 	
 	do
 	{
@@ -168,7 +162,7 @@ TraceResults function OriginToFirst( entity base )
 		if(!IsValid(lastHit))
 			continue
 		ignore.append( traceResult.hitEnt )
-	} while( IsValid( lastHit ) && !lastHit.IsWorld() && !lastHit.IsTitan() && !(lastHit.GetClassName() == "worldspawn") && !(lastHit instanceof CNPC_Titan) && !(lastHit.GetClassName() == "script_mover") )
+	} while( IsValid( lastHit ) && !lastHit.IsWorld() && !lastHit.IsTitan() && !(lastHit.GetClassName() == "worldspawn") && !( lastHit instanceof CNPC_Titan ) && !( lastHit.GetClassName() == "script_mover" ) )
 	return traceResult
 }
 
