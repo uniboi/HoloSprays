@@ -81,7 +81,7 @@ void function SpawnPing( entity player )
 		Signal( pings[0], "PingDestroyed" )
 		if( IsValid( pings[0].sprite ) )
 			pings[0].sprite.Destroy()
-		playerPings[player] = pings.slice(1)
+		playerPings[ player ].remove(0)
 	}
 
 	TraceResults trace = TraceFromEntView( player )
