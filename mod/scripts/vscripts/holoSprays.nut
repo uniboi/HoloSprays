@@ -76,7 +76,6 @@ void function OnUseHoloSpray( entity player )
 	vis.SetOrigin( origin )
 	vis.SetParent( base )
 	AddEntityCallback_OnDamaged( vis, void function( entity vis, var damageInfo ) : ( base ) {
-		printt("wtf")
 			if( !IsValid( vis ) || !IsValid( base ) ) return
 
 			float damageAmount = DamageInfo_GetDamage( damageInfo )
@@ -136,11 +135,7 @@ void function SpawnHoloSprite( entity base, entity vis )
 			light = CreateSprite( center + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
 			light.SetParent( base )
 
-			// vis.kv.solid = SOLID_HITBOXES
-			// vis.ClearInvulnerable()
 			vis.Solid()
-			// vis.SetMaxHealth( VIS_HEALTH )
-			// vis.SetHealth( VIS_HEALTH )
 
 			break
 		}
