@@ -68,19 +68,15 @@ void function OnUseHoloSpray( entity player )
 	const float force = 500.0 // initial force of the base pad
 	vector origin = player.EyePosition() - <0,0,20>
 	entity base = CreatePropPhysics( $"models/gameplay/health_pickup_small.mdl", origin, <0,0,0> )
-	// base.kv.solid = SOLID_VPHYSICS
 	base.SetOwner( player )
 	base.Hide()
-
-	// entity vis = CreatePropDynamic( $"models/weapons/sentry_shield/sentry_shield_proj.mdl", origin )
-	// vis.SetParent( base )
-	// vis.kv.solid = SOLID_VPHYSICS
 
 	entity vis = CreateEntity( "prop_script" )
 	vis.SetValueForModelKey( $"models/weapons/sentry_shield/sentry_shield_proj.mdl" )
 	vis.SetOrigin( origin )
 	vis.SetParent( base )
 	AddEntityCallback_OnDamaged( vis, void function( entity vis, var damageInfo ) : ( base ) {
+		printt("wtf")
 			if( !IsValid( vis ) || !IsValid( base ) ) return
 
 			float damageAmount = DamageInfo_GetDamage( damageInfo )
@@ -93,6 +89,11 @@ void function OnUseHoloSpray( entity player )
 				holoSpraysOfPlayer[ base.GetOwner() ].fastremovebyvalue( base )
 			}
 		} )
+	vis.kv.solid = SOLID_HITBOXES
+	vis.SetMaxHealth( VIS_HEALTH )
+	vis.SetHealth( VIS_HEALTH )
+	vis.NotSolid()
+
 	DispatchSpawn( vis )
 
 	thread SpawnHoloSprite( base, vis )
@@ -135,9 +136,11 @@ void function SpawnHoloSprite( entity base, entity vis )
 			light = CreateSprite( center + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
 			light.SetParent( base )
 
-			vis.kv.solid = SOLID_HITBOXES
-			vis.SetMaxHealth( VIS_HEALTH )
-			vis.SetHealth( VIS_HEALTH )
+			// vis.kv.solid = SOLID_HITBOXES
+			// vis.ClearInvulnerable()
+			vis.Solid()
+			// vis.SetMaxHealth( VIS_HEALTH )
+			// vis.SetHealth( VIS_HEALTH )
 
 			break
 		}
