@@ -108,7 +108,7 @@ void function SpawnHoloSprite( entity base, entity vis )
 	entity light
 	WaitFrame()
 
-	while( IsValid( base ) )
+	while( IsValid( base ) && !base.IsMarkedForDeletion() )
 	{
 		TraceResults hit = OriginToFirst( base )
 		if( Length( base.GetOrigin() - hit.endPos ) <= 10 ) //is object close to the floor
@@ -116,7 +116,6 @@ void function SpawnHoloSprite( entity base, entity vis )
 			//make sure the object doesnt roll
 			base.SetVelocity( <0,0,0> )
 			//adjust angles to surface, <-90,0,0> is needed because we went the medkit to lie down flat
-			// base.SetAngles( < -90,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
 			base.SetAngles( < 0,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
 
 			entity mover = CreateExpensiveScriptMover( base.GetOrigin(), base.GetAngles() )
