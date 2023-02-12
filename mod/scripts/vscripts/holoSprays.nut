@@ -106,38 +106,50 @@ void function SpawnHoloSprite( entity base, entity vis )
 	base.EndSignal( "OnDestroy" )
 	entity sprite
 	entity light
-	WaitFrame()
+	
+	waitthread WaitUntilBaseCollides( base )
 
-	while( IsValid( base ) && !base.IsMarkedForDeletion() )
+	if( IsValid( base ) && !base.IsMarkedForDeletion() ) // Sanity checks
 	{
-		TraceResults hit = OriginToFirst( base )
-		if( Length( base.GetOrigin() - hit.endPos ) <= 10 ) //is object close to the floor
-		{
-			//make sure the object doesnt roll
-			base.SetVelocity( <0,0,0> )
-			//adjust angles to surface, <-90,0,0> is needed because we went the medkit to lie down flat
-			base.SetAngles( < 0,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
+		vector origin = base.GetOrigin()
+		vector endOrigin = origin - <0, 0, 2000>
+		TraceResults hit = TraceLine( origin, endOrigin, [base], TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
 
-			entity mover = CreateExpensiveScriptMover( base.GetOrigin(), base.GetAngles() )
-			base.SetParent( mover )
-			mover.NonPhysicsMoveTo( hit.endPos + <0,0,5.5>, 0.3, 0.0, 0.0 )
+		//make sure the object doesnt roll
+		base.SetVelocity( <0,0,0> )
+		//adjust angles to surface, <-90,0,0> is needed because we went the medkit to lie down flat
+		base.SetAngles( < 0,0,0 > + AnglesOnSurface( hit.surfaceNormal, AnglesToForward( base.GetAngles() ) ) )
 
-			base.SetParent( hit.hitEnt )
+		entity mover = CreateExpensiveScriptMover( base.GetOrigin(), base.GetAngles() )
+		base.SetParent( mover )
+		mover.NonPhysicsMoveTo( hit.endPos + <0,0,5.5>, 0.3, 0.0, 0.0 )
 
-			//make sure the object doesnt rotate too much
-			base.StopPhysics()
+		base.SetParent( hit.hitEnt )
 
-			SprayInfo info = sprayInfos.getrandom()
-			vector center = vis.GetCenter()
-			sprite = CreateSprite( center + info.offset, <0,0,0>, info.material, "200 200 200", info.scale )
-			sprite.SetParent( base ) 
-			light = CreateSprite( center + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
-			light.SetParent( base )
+		//make sure the object doesnt rotate too much
+		base.StopPhysics()
 
-			vis.Solid()
+		SprayInfo info = sprayInfos.getrandom()
+		vector center = vis.GetCenter()
+		sprite = CreateSprite( center + info.offset, <0,0,0>, info.material, "200 200 200", info.scale )
+		sprite.SetParent( base ) 
+		light = CreateSprite( center + <0,0,6.5>, <0,0,0>, $"sprites/glow_05.vmt", "200 200 200", 0.75 )
+		light.SetParent( base )
 
-			break
-		}
+		vis.Solid()
+	}
+}
+
+void function WaitUntilBaseCollides( entity b )
+{
+	while( true )
+	{
+		vector origin = b.GetOrigin()
+		vector endOrigin = <origin.x, origin.y, origin.z - 2000>
+		vector dir = endOrigin - origin
+		float l = TraceLineSimple( origin, endOrigin, b )
+		if( Length( origin - (origin + dir * l) ) <= 10 )
+			return
 		WaitFrame()
 	}
 }
@@ -150,10 +162,10 @@ TraceResults function OriginToFirst( entity base )
 	array<entity> ignore = []
 	vector origin1 = base.GetOrigin()
 	vector origin = origin1 + <1,1,1>
-	
+	vector endOrigin = <origin.x, origin.y, origin.z - 2000>
+
 	do
 	{
-		vector endOrigin = <origin.x, origin.y, origin.z - 2000>
 		traceResult = TraceLine( origin, endOrigin, ignore, TRACE_MASK_NPCWORLDSTATIC, TRACE_COLLISION_GROUP_NONE )
 		lastHit = traceResult.hitEnt
 		if(!IsValid(lastHit))
